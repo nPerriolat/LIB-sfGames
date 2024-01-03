@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2023
-** library MY_GRAPHICS
+** library sfGames
 ** File description:
 ** function that create a window struct from parameters
 */

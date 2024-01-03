@@ -1,6 +1,6 @@
 ##
 ## EPITECH PROJECT, 2023
-## libgraphics
+## library sfGames
 ## File description:
 ## Makefile
 ##
@@ -94,7 +94,7 @@ SRC		=	vector/set_vector.c			\
 
 OBJ	=	$(SRC:.c=.o)
 
-CC 	=	gcc
+CC 	=	g++
 DEBUG	=	-g3 -p -ggdb3
 # Prevents GCC optimizations
 RELEASE =  -O0 -fno-builtin
@@ -104,10 +104,10 @@ AR_LDFLAGS 	= csfml-graphics csfml-window csfml-system
 AR_PRELOAD 	=
 ANALYZER	=
 
-CFLAGS	+=	-Wall -Wextra -pedantic -fsigned-char		\
--funsigned-bitfields -Wno-unused-parameter -std=gnu2x -pedantic
+CFLAGS	+=	-Wall -Wextra -pedantic -fsigned-char	\
+-funsigned-bitfields -Wno-unused-parameter -pedantic
 
-NAME	=	../libgraphics.a
+NAME	=	libsfGames.a
 
 .PHONY: all re
 all: CFLAGS += $(RELEASE)
@@ -131,40 +131,61 @@ analyzer: CFLAGS += $(DEBUG) -fanalyzer
 analyzer: $(NAME)
 reanalyzer: fclean analyzer
 
-.PHONY: link_header
-link_header: my_graphics.h
-	@echo [LIB MY_GRAPHICS] Linking header my_graphics.h
-	@ln -f my_graphics.h ../../include/my_graphics.h
+.PHONY: clean_tests
+clean_tests:
+	@echo "[LIB SFGAMES] Removing criterion temporary files."
+	@rm -f *.gcda
+	@rm -f *.gcno
 
-.PHONY: link_header
+.PHONY: tests
+tests: clean_tests
+	@if [[ "$(shell find ./tests -type f -name '*.c')" == "" ]];			\
+		then																\
+		echo "[LIB SFGAMES] No .c file in /tests directory.";				\
+	else																	\
+		echo "[LIB SFGAMES] Building tests;"								\
+		$(CC) -g3 $(SRC) ./tests/*.c --coverage -lcriterion					\
+			-DRUNNING_CRITERION_TESTS $(CFLAGS) $(LDFLAGS) -o $(NAME);		\
+	fi
 
-$(NAME): link_header $(OBJ)
-	@echo Building lib graphics...
+.PHONY: tests_run
+tests_run: clean_tests tests
+	@echo "[LIB SFGAMES] Running tests :"
+	@./$(NAME)
+	@echo "[LIB SFGAMES] Writing line coverage log in logs/line_coverage.log."
+	@gcovr --exclude ./tests/ > ./logs/ine_coverage.log
+	@echo -n "[LIB SFGAMES] Writing branch coverage log in logs/branch_coverage.log."
+	@gcovr --exclude ./tests/ --branches > ./logs/branch_coverage.log
+
+$(NAME): $(OBJ)
+	@echo "Building lib graphics..."
 	@echo Dependencies: $(AR_PRELOAD) $(AR_LDFLAGS)
 	@ar rc -l"$(AR_PRELOAD) $(AR_LDFLAGS)" $(NAME) $(OBJ)
-	@if [[ "$(ANALYZER)" != "" ]]; then\
-		echo "[LIB GRAPHICS] GCC Analyzer log in analyzer.log";\
+	@if [[ "$(ANALYZER)" != "" ]]; then										\
+		echo "[LIB GRAPHICS] GCC Analyzer log in logs/analyzer.log";		\
 	fi
 
 %.o: %.c
-	@if [[ "$(ANALYZER)" != "" ]]; then\
-		$(CC) -c $(CFLAGS) $< -I ./include/ -o $@ 2>> analyzer.log;\
-	else\
-		$(CC) -c $(CFLAGS) $< -I ./include/ -o $@;\
+	@if [[ "$(ANALYZER)" != "" ]]; then										\
+		$(CC) -c $(CFLAGS) $< -I ./include/ -o $@ 2>> ./logs/analyzer.log;	\
+	else																	\
+		$(CC) -c $(CFLAGS) $< -I ./include/ -o $@;							\
 	fi
 
-.PHONY: clean
-clean:
-	@echo "[LIB MY_GRAPHICS] Removing temporary and object files."
-	@rm -f *.gcda
-	@rm -f *.gcno
+.PHONY: clean_vgcore
+clean_vgcore:
+	@echo "[LIB SFGAMES] Removing Core Dumped files."
 	@rm -f vgcore.*
+	@rm -f valgrind*.log.core.*
+
+.PHONY: clean
+clean: clean_vgcore clean_tests
+	@echo "[LIB SFGAMES] Removing temporary and object files."
+	@rm -f ./logs/*.log
 	@rm -f *.log
 	@rm -f $(OBJ)
-	@rm -f $(NAME)
-	@rm -f ../$(NAME)
 
 .PHONY: fclean
 fclean: clean
-	@echo "[LIB MY_GRAPHICS] Removing binary."
-	@rm -f ../$(NAME)
+	@echo "[LIB SFGAMES] Removing binary."
+	@rm -f $(NAME)
